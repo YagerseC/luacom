@@ -25,6 +25,13 @@ extern "C"
 
 #define MAX_VALID_STRING_SIZE 1000
 
+#ifdef __CYGWIN__
+	#define CODE_PAGE CP_UTF8 // By default, Cygwin internally convert filename to UTF-8
+#else
+	#define CODE_PAGE CP_ACP
+#endif
+
+
 
 FILE* tUtil::log_file = NULL;
 CRITICAL_SECTION log_file_cs;
@@ -113,7 +120,7 @@ tStringBuffer tUtil::bstr2string(BSTR bstr, bool nullTerminated)
 
       // gets string length
       int lenMulti = WideCharToMultiByte(
-        CP_UTF8,            // code page
+        CODE_PAGE,            // code page
         0,            // performance and mapping flags
         bstr,    // wide-character string
         static_cast<int>(lenWide),  // number of chars in string
@@ -130,7 +137,7 @@ tStringBuffer tUtil::bstr2string(BSTR bstr, bool nullTerminated)
 		~C() { delete [] s; } char * s; } str(lenMulti + (nullTerminated? 1 : 0));
 
       int result = WideCharToMultiByte(
-        CP_UTF8,            // code page
+        CODE_PAGE,            // code page
         0,            // performance and mapping flags
         bstr,    // wide-character string
         static_cast<int>(lenWide),  // number of chars in string
@@ -173,11 +180,11 @@ BSTR tUtil::string2bstr(const char * string, size_t len)
     {
       if (len != -1 && len > INT_MAX) LUACOM_ERROR("string too long");
       int lenWide =
-        MultiByteToWideChar(CP_UTF8, 0, string, static_cast<int>(len), NULL, 0);
+        MultiByteToWideChar(CODE_PAGE, 0, string, static_cast<int>(len), NULL, 0);
       if(lenWide == 0)
         LUACOM_ERROR(tUtil::GetErrorMessage(GetLastError()));
       bstr = SysAllocStringLen(NULL, lenWide); // plus initializes '\0' terminator
-      MultiByteToWideChar(  CP_UTF8, 0, string, static_cast<int>(len), bstr, lenWide);
+      MultiByteToWideChar(  CODE_PAGE, 0, string, static_cast<int>(len), bstr, lenWide);
     }
     return bstr;
   }
